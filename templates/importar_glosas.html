@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Cargar Glosas desde Excel</h2>
+
+<form action="/importar-glosas" method="post" enctype="multipart/form-data">
+    <input type="file" name="file" required>
+    <button class="btn btn-primary mt-2">Subir archivo</button>
+</form>
+
+{% endblock %}

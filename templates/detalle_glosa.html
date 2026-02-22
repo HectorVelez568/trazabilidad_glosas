@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Detalle de Glosa</h2>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <p><strong>ID:</strong> {{ glosa.id_glosa }}</p>
+        <p><strong>Factura:</strong> {{ glosa.id_factura }}</p>
+        <p><strong>Código:</strong> {{ glosa.codigo_glosa }}</p>
+        <p><strong>Valor:</strong> ${{ glosa.valor_glosado }}</p>
+        <p><strong>Estado:</strong> {{ glosa.estado_glosa }}</p>
+        <p><strong>Descripción:</strong> {{ glosa.descripcion }}</p>
+    </div>
+</div>
+
+<div class="mb-3">
+    <label>Valor aceptado</label>
+    <input type="number" step="0.01" name="valor_aceptado" class="form-control" required>
+</div>
+
+<div class="mb-3">
+    <label>Valor no aceptado</label>
+    <input type="number" step="0.01" name="valor_no_aceptado" class="form-control" required>
+</div>
+
+<hr>
+
+<h4>Responder Glosa</h4>
+
+<form method="post">
+
+    <div class="mb-3">
+        <label class="form-label">Respuesta</label>
+        <textarea name="respuesta" class="form-control" required></textarea>
+    </div>
+
+    <!-- 🔥 AHORA SÍ DENTRO DEL FORM -->
+    <div class="mb-3">
+        <label>Valor aceptado</label>
+        <input type="number" step="0.01" name="valor_aceptado" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+        <label>Valor no aceptado</label>
+        <input type="number" step="0.01" name="valor_no_aceptado" class="form-control" required>
+    </div>
+
+    <button type="submit" class="btn btn-success">
+        Enviar Respuesta
+    </button>
+
+</form>
+
+<hr>
+
+<h4>Historial de Trazabilidad</h4>
+
+{% if respuestas %}
+    {% for r in respuestas %}
+    <div class="card mt-3 border-start border-4 border-primary">
+        <div class="card-body">
+            <small class="text-muted">
+                {{ r.fecha_creacion.strftime("%d/%m/%Y %H:%M") }}
+            </small>
+            <p><strong>Usuario:</strong> {{ r.usuario_que_responde }}</p>
+            <p><strong>Tipo:</strong> {{ r.tipo_respuesta }}</p>
+            <p><strong>Estado posterior:</strong> {{ r.estado_posterior_glosa }}</p>
+            <p><strong>Argumento:</strong> {{ r.argumento_respuesta }}</p>
+            <p><strong>Aceptado:</strong> ${{ r.valor_aceptado }}</p>
+            <p><strong>No aceptado:</strong> ${{ r.valor_no_aceptado }}</p>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <p class="text-muted mt-3">No hay historial aún.</p>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Gestión de Facturas</h2>
+
+<table class="table table-striped mt-4">
+    <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Número</th>
+            <th>Valor</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for factura in facturas %}
+        <tr>
+            <td>{{ factura.id_factura }}</td>
+            <td>{{ factura.numero_factura }}</td>
+            <td>${{ factura.valor_total_factura }}</td>
+            <td>{{ factura.estado_factura }}</td>
+            <td>
+                <a href="/factura/{{ factura.id_factura }}" class="btn btn-sm btn-primary">
+                    Ver Detalle
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

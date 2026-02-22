@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Gestión de Glosas</h2>
+
+<!-- 🔥 PANEL DE ACCIONES -->
+<div class="d-flex gap-2 mb-3">
+
+    <a href="/importar-facturas-view" class="btn btn-success">
+        📤 Cargar Facturas
+    </a>
+
+    <a href="/importar-glosas-view" class="btn btn-warning">
+        ⚠️ Cargar Glosas
+    </a>
+
+    <a href="/reporte-facturas" class="btn btn-primary">
+        📊 Exportar Excel
+    </a>
+
+</div>
+
+<!-- 🔎 TABLA -->
+<table class="table table-hover mt-4">
+    <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Factura</th>
+            <th>EPS</th>
+            <th>Motivo</th>
+            <th>Valor</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+
+    <tbody>
+    {% for item in data %}
+    <tr class="table-{{ item.color }}">
+        
+        <td>{{ item.glosa.id_glosa }}</td>
+
+        <!-- 🔗 FACTURA REAL -->
+        <td>
+            {% if item.factura %}
+                {{ item.factura.numero_factura }}
+            {% else %}
+                <span class="text-danger">Sin factura</span>
+            {% endif %}
+        </td>
+
+        <!-- 🏥 EPS -->
+        <td>
+            {% if item.factura %}
+                {{ item.factura.nombre_eps }}
+            {% else %}
+                <span class="text-danger">Sin EPS</span>
+            {% endif %}
+        </td>
+
+        <!-- 📌 MOTIVO GLOSA -->
+        <td>
+            {% if item.motivo %}
+                {{ item.motivo.codigo_motivo }}
+            {% else %}
+                <span class="text-danger">Sin motivo</span>
+            {% endif %}
+        </td>
+
+        <!-- 💰 VALOR FORMATEADO -->
+        <td>
+            ${{ "{:,.0f}".format(item.glosa.valor_glosado) }}
+        </td>
+
+        <!-- 🎨 ESTADO -->
+        <td>
+            <span class="badge bg-{{ item.color }}">
+                {{ item.glosa.estado_glosa }}
+            </span>
+        </td>
+
+        <!-- ⚙️ ACCIONES -->
+        <td>
+
+            <!-- 👁 VER DETALLE -->
+            <a href="/glosa/{{ item.glosa.id_glosa }}" class="btn btn-sm btn-primary mb-1">
+                Ver
+            </a>
+
+            <!-- 🔄 CAMBIAR ESTADO -->
+            <form method="POST" action="{{ url_for('actualizar_estado_glosa', id=item.glosa.id_glosa) }}">
+                <select name="estado" class="form-select form-select-sm mt-1">
+                    <option value="Pendiente" {% if item.glosa.estado_glosa == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                    <option value="En revisión" {% if item.glosa.estado_glosa == 'En revisión' %}selected{% endif %}>En revisión</option>
+                    <option value="Respondida" {% if item.glosa.estado_glosa == 'Respondida' %}selected{% endif %}>Respondida</option>
+                    <option value="Aceptada" {% if item.glosa.estado_glosa == 'Aceptada' %}selected{% endif %}>Aceptada</option>
+                    <option value="Rechazada" {% if item.glosa.estado_glosa == 'Rechazada' %}selected{% endif %}>Rechazada</option>
+                </select>
+
+                <button type="submit" class="btn btn-sm btn-success mt-1">
+                    ✔ Actualizar
+                </button>
+            </form>
+
+        </td>
+
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

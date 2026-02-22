@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Importar Facturas</h2>
+
+<form action="/importar-facturas" method="post" enctype="multipart/form-data">
+    <div class="mb-3">
+        <label class="form-label">Archivo Excel</label>
+        <input type="file" name="file" class="form-control" required>
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+        Cargar Facturas
+    </button>
+</form>
+
+{% endblock %}

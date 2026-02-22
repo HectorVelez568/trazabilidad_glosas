@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Dashboard Administrativo</h2>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <h5>Total Facturas</h5>
+                <h2>{{ total_facturas }}</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <h5>Total Glosas</h5>
+                <h2>{{ total_glosas }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr>
+
+<h4>🚨 Alertas</h4>
+
+<div class="row">
+
+    <!-- VENCIDAS -->
+    <div class="col-md-3">
+        <div class="card bg-danger text-white p-3">
+            <h5>Vencidas</h5>
+            <h3>{{ vencidas|length }}</h3>
+        </div>
+    </div>
+
+    <!-- POR VENCER -->
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark p-3">
+            <h5>Por vencer</h5>
+            <h3>{{ por_vencer|length }}</h3>
+        </div>
+    </div>
+
+    <!-- SIN RESPUESTA -->
+    <div class="col-md-3">
+        <div class="card bg-secondary text-white p-3">
+            <h5>Sin respuesta</h5>
+            <h3>{{ sin_respuesta|length }}</h3>
+        </div>
+    </div>
+
+    <!-- ALTO VALOR -->
+    <div class="col-md-3">
+        <div class="card bg-info text-white p-3">
+            <h5>Alto valor</h5>
+            <h3>{{ alto_valor|length }}</h3>
+        </div>
+    </div>
+
+</div>
+
+<hr>
+<h5>Glosas vencidas</h5>
+
+{% for g in vencidas %}
+<div class="alert alert-danger">
+    Glosa {{ g.id_glosa }} - Factura {{ g.id_factura }}
+</div>
+
+{% endfor %}
+
+{% endblock %}

@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Trazabilidad de Glosas</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: #f4f7f6; color: #333; }
+        .header { background-color: #2c3e50; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header h1 { margin: 0; font-size: 1.8em; }
+        .user-info { font-size: 0.9em; }
+        .user-info button { background: none; border: 1px solid white; color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; transition: background-color 0.3s; }
+        .user-info button:hover { background-color: #34495e; }
+
+        .container { max-width: 1200px; margin: 30px auto; padding: 25px; background-color: white; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+
+        h2 { color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 25px; }
+        h3 { color: #34495e; margin-top: 20px; }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        input[type="text"], input[type="number"], input[type="date"], input[type="password"], select, textarea {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 1em;
+        }
+        textarea { height: 80px; resize: vertical; }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+            margin-right: 10px; /* Espacio entre botones */
+        }
+        button:hover { background-color: #2980b9; }
+        button:active { background-color: #2471a3; }
+        button.secondary { background-color: #95a5a6; }
+        button.secondary:hover { background-color: #7f8c8d; }
+        button.danger { background-color: #e74c3c; }
+        button.danger:hover { background-color: #c0392b; }
+
+        .button-group { margin-top: 20px; margin-bottom: 20px; }
+
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #ecf0f1;
+            border-radius: 8px;
+        }
+        .filter-item { margin-bottom: 10px; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden; /* Para que los bordes redondeados se vean bien con el overflow */
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f8f8;
+            font-weight: bold;
+            color: #555;
+            text-transform: uppercase;
+            font-size: 0.9em;
+        }
+        tr:nth-child(even) { background-color: #fcfcfc; }
+        tr:hover { background-color: #f1f1f1; }
+        td.actions button {
+            padding: 5px 10px;
+            font-size: 0.8em;
+            margin-right: 5px;
+        }
+        pre { background-color: #e8f0f3; padding: 15px; border-radius: 5px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; margin-top: 15px; border: 1px dashed #b3dbe5; }
+
+        .alert-message {
+            padding: 10px 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .alert-info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+
+        hr { border: 0; border-top: 1px solid #eee; margin: 40px 0; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Sistema de Trazabilidad de Glosas</h1>
+        <div class="user-info">
+            <span id="loggedInUser">Invitado</span> |
+            <button id="logoutBtn">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <section id="authSection">
+            <h2>Autenticación (Generar Token)</h2>
+            <p class="alert-info">Inicia sesión para interactuar con la API. Usa un usuario ADMIN (ej: admin@example.com / tu_admin_password)</p>
+            <div class="form-group">
+                <label for="loginEmail">Email:</label>
+                <input type="text" id="loginEmail" value="admin@example.com">
+            </div>
+            <div class="form-group">
+                <label for="loginPassword">Contraseña:</label>
+                <input type="password" id="loginPassword" value="your_admin_password">
+            </div>
+            <button id="loginBtn">Login (Obtener Token)</button>
+            <h3>Token de Acceso:</h3>
+            <pre id="tokenOutput"></pre>
+            <p><strong>Copia este token y haz clic en "Authorize" en Swagger UI si necesitas probar ahí.</strong></p>
+        </section>
+
+        <hr>
+
+        <section>
+            <h2>Glosas Registradas</h2>
+
+            <div class="button-group">
+                <button id="newGlosaBtn">Nueva Glosa</button>
+                <button id="refreshGlosasBtn" class="secondary">Actualizar Lista</button>
+                <button id="exportGlosasBtn" class="secondary">Exportar Glosas</button>
+            </div>
+
+            <h3>Filtros de Búsqueda</h3>
+            <div class="filters">
+                <div class="filter-item">
+                    <label for="filterFacturaNum">Número Factura:</label>
+                    <input type="text" id="filterFacturaNum" placeholder="Ej: 12345">
+                </div>
+                <div class="filter-item">
+                    <label for="filterEstado">Estado:</label>
+                    <select id="filterEstado">
+                        <option value="">Todos</option>
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="Respondida">Respondida</option>
+                        <option value="Conciliada">Conciliada</option>
+                        <option value="Rechazada">Rechazada</option>
+                        <option value="Cerrada">Cerrada</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label for="filterFechaGlosaDesde">Fecha Glosa (Desde):</label>
+                    <input type="date" id="filterFechaGlosaDesde">
+                </div>
+                <div class="filter-item">
+                    <label for="filterFechaGlosaHasta">Fecha Glosa (Hasta):</label>
+                    <input type="date" id="filterFechaGlosaHasta">
+                </div>
+                </div>
+            <button id="applyFiltersBtn">Aplicar Filtros</button>
+            <button id="clearFiltersBtn" class="secondary">Limpiar Filtros</button>
+
+
+            <h3>Lista de Glosas</h3>
+            <div id="glosasListOutput">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID Glosa</th>
+                            <th>Factura</th>
+                            <th>Fecha Glosa</th>
+                            <th>Valor Glosado</th>
+                            <th>Estado</th>
+                            <th>Motivo</th>
+                            <th>Usuario Resp.</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="glosasTableBody">
+                        <tr><td colspan="8" style="text-align: center;">Cargando glosas...</td></tr>
+                    </tbody>
+                </table>
+                <p id="glosasStatusMessage" style="text-align: center; margin-top: 15px;"></p>
+            </div>
+        </section>
+
+        <hr>
+
+        <section id="createGlosaSection" style="display: none;">
+            <h2>Crear Nueva Glosa</h2>
+            <form id="createGlosaForm">
+                <div class="form-group">
+                    <label for="inputFacturaId">ID Factura:</label>
+                    <input type="number" id="inputFacturaId" value="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="inputMotivoGlosaId">ID Motivo Glosa:</label>
+                    <input type="number" id="inputMotivoGlosaId" value="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="inputFechaGlosa">Fecha Glosa:</label>
+                    <input type="date" id="inputFechaGlosa" value="2025-07-26" required>
+                </div>
+                <div class="form-group">
+                    <label for="inputValorGlosado">Valor Glosado:</label>
+                    <input type="number" step="0.01" id="inputValorGlosado" value="100000.00" required>
+                </div>
+                <div class="form-group">
+                    <label for="inputObservaciones">Observaciones:</label>
+                    <textarea id="inputObservaciones">Glosa de prueba desde el frontend.</textarea>
+                </div>
+                <div class="form-group">
+                    <label for="inputUsuarioResponsable">ID Usuario Responsable:</label>
+                    <input type="number" id="inputUsuarioResponsable" value="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="inputFechaVencimiento">Fecha Vencimiento Respuesta:</label>
+                    <input type="date" id="inputFechaVencimiento" value="2025-08-10">
+                </div>
+                <button type="submit" id="submitCreateGlosaBtn">Crear Glosa</button>
+                <button type="button" id="cancelCreateGlosaBtn" class="secondary">Cancelar</button>
+            </form>
+            <h3>Resultado Creación:</h3>
+            <pre id="createGlosaOutput"></pre>
+        </section>
+
+        <hr>
+
+        <section id="editGlosaSection" style="display: none;">
+            <h2>Editar Glosa Existente</h2>
+            <form id="editGlosaForm">
+                <input type="hidden" id="editGlosaId"> <div class="form-group">
+                    <label for="editFacturaId">ID Factura:</label>
+                    <input type="number" id="editFacturaId" required>
+                </div>
+                <div class="form-group">
+                    <label for="editMotivoGlosaId">ID Motivo Glosa:</label>
+                    <input type="number" id="editMotivoGlosaId" required>
+                </div>
+                <div class="form-group">
+                    <label for="editFechaGlosa">Fecha Glosa:</label>
+                    <input type="date" id="editFechaGlosa" required>
+                </div>
+                <div class="form-group">
+                    <label for="editValorGlosado">Valor Glosado:</label>
+                    <input type="number" step="0.01" id="editValorGlosado" required>
+                </div>
+                <div class="form-group">
+                    <label for="editObservaciones">Observaciones:</label>
+                    <textarea id="editObservaciones"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editEstadoGlosa">Estado Glosa:</label>
+                    <select id="editEstadoGlosa">
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="Respondida">Respondida</option>
+                        <option value="Conciliada">Conciliada</option>
+                        <option value="Rechazada">Rechazada</option>
+                        <option value="Cerrada">Cerrada</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editUsuarioResponsable">ID Usuario Responsable:</label>
+                    <input type="number" id="editUsuarioResponsable" required>
+                </div>
+                <div class="form-group">
+                    <label for="editFechaVencimiento">Fecha Vencimiento Respuesta:</label>
+                    <input type="date" id="editFechaVencimiento">
+                </div>
+                <button type="submit" id="submitEditGlosaBtn">Guardar Cambios</button>
+                <button type="button" id="cancelEditGlosaBtn" class="secondary">Cancelar</button>
+            </form>
+            <h3>Resultado Edición:</h3>
+            <pre id="editGlosaOutput"></pre>
+        </section>
+
+
+    </div>
+
+    <script>
+        // ¡IMPORTANTE! CAMBIA ESTA IP por la IP de tu PC "servidor" y el puerto de tu API.
+        // Ejemplo: const API_BASE_URL = 'http://192.168.1.100:8000';
+        const API_BASE_URL = 'http://192.168.1.24:8000'; // Ajusta esto con tu IP real
+        let accessToken = ''; // Variable para almacenar el token de autenticación
+        let loggedInUserId = null; // Para almacenar el ID del usuario logueado
+        let loggedInUserName = 'Invitado'; // Para mostrar en el header
+
+        // Elementos del DOM
+        const authSection = document.getElementById('authSection');
+        const loginBtn = document.getElementById('loginBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const tokenOutput = document.getElementById('tokenOutput');
+        const loggedInUserSpan = document.getElementById('loggedInUser');
+
+        const newGlosaBtn = document.getElementById('newGlosaBtn');
+        const refreshGlosasBtn = document.getElementById('refreshGlosasBtn');
+        const applyFiltersBtn = document.getElementById('applyFiltersBtn');
+        const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+
+        const filterFacturaNum = document.getElementById('filterFacturaNum');
+        const filterEstado = document.getElementById('filterEstado');
+        const filterFechaGlosaDesde = document.getElementById('filterFechaGlosaDesde');
+        const filterFechaGlosaHasta = document.getElementById('filterFechaGlosaHasta');
+
+        const glosasTableBody = document.getElementById('glosasTableBody');
+        const glosasStatusMessage = document.getElementById('glosasStatusMessage');
+
+        const createGlosaSection = document.getElementById('createGlosaSection');
+        const createGlosaForm = document.getElementById('createGlosaForm');
+        const cancelCreateGlosaBtn = document.getElementById('cancelCreateGlosaBtn');
+        const createGlosaOutput = document.getElementById('createGlosaOutput');
+
+        // NUEVOS ELEMENTOS DEL DOM PARA EDICIÓN
+        const editGlosaSection = document.getElementById('editGlosaSection');
+        const editGlosaForm = document.getElementById('editGlosaForm');
+        const cancelEditGlosaBtn = document.getElementById('cancelEditGlosaBtn');
+        const editGlosaIdInput = document.getElementById('editGlosaId'); // Campo oculto
+        const editGlosaOutput = document.getElementById('editGlosaOutput');
+        // Campos del formulario de edición
+        const editFacturaId = document.getElementById('editFacturaId');
+        const editMotivoGlosaId = document.getElementById('editMotivoGlosaId');
+        const editFechaGlosa = document.getElementById('editFechaGlosa');
+        const editValorGlosado = document.getElementById('editValorGlosado');
+        const editObservaciones = document.getElementById('editObservaciones');
+        const editEstadoGlosa = document.getElementById('editEstadoGlosa');
+        const editUsuarioResponsable = document.getElementById('editUsuarioResponsable');
+        const editFechaVencimiento = document.getElementById('editFechaVencimiento');
+
+
+        // --- Funciones de Utilidad ---
+        function showAlert(message, type) {
+            const container = document.querySelector('.container');
+            let alertDiv = document.querySelector('.alert-message');
+            if (!alertDiv) {
+                alertDiv = document.createElement('div');
+                alertDiv.classList.add('alert-message');
+                container.prepend(alertDiv);
+            }
+            alertDiv.className = 'alert-message'; // Reset classes
+            alertDiv.classList.add(`alert-${type}`);
+            alertDiv.textContent = message;
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000); // El mensaje desaparece después de 5 segundos
+        }
+
+        function updateUIOnLogin() {
+            if (accessToken) {
+                authSection.style.display = 'none'; // Oculta la sección de login
+                loggedInUserSpan.textContent = `Usuario: ${loggedInUserName}`;
+                showAlert('Login exitoso!', 'success');
+                // Carga las glosas después de un login exitoso
+                fetchGlosas();
+            } else {
+                authSection.style.display = 'block'; // Muestra la sección de login
+                loggedInUserSpan.textContent = 'Invitado';
+            }
+        }
+
+        // --- Eventos de Autenticación ---
+        loginBtn.addEventListener('click', async () => {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            tokenOutput.textContent = 'Iniciando sesión...';
+
+            const formData = new URLSearchParams();
+            formData.append('username', email); // FastAPI espera 'username' para el email
+            formData.append('password', password);
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/token`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData.toString()
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`HTTP error! status: ${response.status} - ${JSON.stringify(errorData)}`);
+                }
+                const data = await response.json();
+                accessToken = data.access_token; // Almacena el token
+                loggedInUserId = data.user_id; // Suponiendo que tu token devuelva user_id
+                loggedInUserName = data.user_name || 'Usuario Logueado'; // Suponiendo que devuelva user_name
+
+                tokenOutput.textContent = `Token: ${accessToken}\nTipo: ${data.token_type}`;
+                updateUIOnLogin(); // Actualiza la UI
+            } catch (error) {
+                tokenOutput.textContent = `Error en el login: ${error.message}`;
+                console.error('Error en el login:', error);
+                accessToken = ''; // Limpia el token si falla
+                loggedInUserId = null;
+                loggedInUserName = 'Invitado';
+                updateUIOnLogin(); // Actualiza la UI para mostrar sección de login
+                showAlert(`Error en el login: ${error.message}`, 'error');
+            }
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            accessToken = '';
+            loggedInUserId = null;
+            loggedInUserName = 'Invitado';
+            updateUIOnLogin(); // Muestra la sección de login de nuevo
+            glosasTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Por favor, inicia sesión para ver las glosas.</td></tr>';
+            glosasStatusMessage.textContent = '';
+            showAlert('Sesión cerrada.', 'info');
+        });
+
+
+        // --- Funciones para Glosas ---
+
+        async function fetchGlosas() {
+            glosasTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Cargando glosas...</td></tr>';
+            glosasStatusMessage.textContent = '';
+
+            // Si GET /glosas/ requiere autenticación (lo cual es común en APIs reales):
+            if (!accessToken) {
+                glosasTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Inicia sesión para ver las glosas.</td></tr>';
+                showAlert('Debes iniciar sesión para obtener las glosas.', 'warning');
+                return;
+            }
+            
+            const queryParams = new URLSearchParams();
+            if (filterFacturaNum.value) queryParams.append('numero_factura', filterFacturaNum.value);
+            if (filterEstado.value) queryParams.append('estado_glosa', filterEstado.value);
+            if (filterFechaGlosaDesde.value) queryParams.append('fecha_glosa_inicio', filterFechaGlosaDesde.value);
+            if (filterFechaGlosaHasta.value) queryParams.append('fecha_glosa_fin', filterFechaGlosaHasta.value);
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/glosas/?${queryParams.toString()}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}` // <-- DESCOMENTADO para que funcione con tu API
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`HTTP error! status: ${response.status} - ${JSON.stringify(errorData)}`);
+                }
+                const glosas = await response.json();
+                renderGlosasTable(glosas);
+                glosasStatusMessage.textContent = `Se encontraron ${glosas.length} glosas.`;
+            } catch (error) {
+                glosasTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: red;">Error al cargar glosas.</td></tr>';
+                glosasStatusMessage.textContent = `Error: ${error.message}`;
+                console.error('Error al obtener glosas:', error);
+                showAlert(`Error al cargar glosas: ${error.message}`, 'error');
+            }
+        }
+
+        function renderGlosasTable(glosas) {
+            glosasTableBody.innerHTML = ''; // Limpiar la tabla
+
+            if (glosas.length === 0) {
+                glosasTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No se encontraron glosas con los filtros aplicados.</td></tr>';
+                return;
+            }
+
+            glosas.forEach(glosa => {
+                const row = glosasTableBody.insertRow();
+                row.insertCell().textContent = glosa.id_glosa;
+                row.insertCell().textContent = glosa.numero_factura || glosa.id_factura; // Si la API devuelve número, úsalo
+                row.insertCell().textContent = glosa.fecha_glosa;
+                row.insertCell().textContent = glosa.valor_glosado ? `$${parseFloat(glosa.valor_glosado).toLocaleString('es-CO')}` : '$0';
+                row.insertCell().textContent = glosa.estado_glosa;
+                row.insertCell().textContent = glosa.motivo_glosa_descripcion || glosa.id_motivo_glosa; // Si la API devuelve descripción, úsala
+                row.insertCell().textContent = glosa.usuario_responsable_nombre || glosa.usuario_responsable; // Si la API devuelve nombre, úsalo
+
+                const actionsCell = row.insertCell();
+                const viewBtn = document.createElement('button');
+                viewBtn.textContent = 'Ver';
+                viewBtn.classList.add('secondary');
+                viewBtn.addEventListener('click', () => alert(`Ver detalle de Glosa ID: ${glosa.id_glosa}\nObservaciones: ${glosa.observaciones_glosa}`));
+                actionsCell.appendChild(viewBtn);
+
+                const editBtn = document.createElement('button');
+                editBtn.textContent = 'Editar';
+                editBtn.classList.add('secondary');
+                editBtn.addEventListener('click', () => {
+                    showEditGlosaForm(glosa); // <--- Llama a la nueva función de edición
+                });
+                actionsCell.appendChild(editBtn);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Eliminar';
+                deleteBtn.classList.add('danger');
+                deleteBtn.addEventListener('click', async () => {
+                    if (confirm(`¿Estás seguro de eliminar la Glosa ID ${glosa.id_glosa}?`)) {
+                        await deleteGlosa(glosa.id_glosa);
+                    }
+                });
+                actionsCell.appendChild(deleteBtn);
+            });
+        }
+
+        async function deleteGlosa(glosaId) {
+            if (!accessToken) {
+                showAlert('Debes iniciar sesión para eliminar glosas.', 'error');
+                return;
+            }
+            try {
+                const response = await fetch(`${API_BASE_URL}/glosas/${glosaId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                if (response.status === 204) { // 204 No Content para eliminación exitosa
+                    showAlert(`Glosa ID ${glosaId} eliminada con éxito.`, 'success');
+                    fetchGlosas(); // Recargar la lista de glosas
+                } else if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`HTTP error! status: ${response.status} - ${JSON.stringify(errorData)}`);
+                }
+            } catch (error) {
+                console.error('Error al eliminar glosa:', error);
+                showAlert(`Error al eliminar glosa ID ${glosaId}: ${error.message}`, 'error');
+            }
+        }
+
+        // Función para mostrar el formulario de edición y rellenarlo
+        function showEditGlosaForm(glosa) {
+            // Ocultar sección de creación si está visible
+            createGlosaSection.style.display = 'none';
+            
+            // Mostrar la sección de edición
+            editGlosaSection.style.display = 'block';
+
+            // Rellenar el formulario con los datos de la glosa
+            editGlosaIdInput.value = glosa.id_glosa;
+            editFacturaId.value = glosa.id_factura;
+            editMotivoGlosaId.value = glosa.id_motivo_glosa;
+            editFechaGlosa.value = glosa.fecha_glosa;
+            editValorGlosado.value = glosa.valor_glosado;
+            editObservaciones.value = glosa.observaciones_glosa;
+            editEstadoGlosa.value = glosa.estado_glosa;
+            editUsuarioResponsable.value = glosa.usuario_responsable;
+            // Asegúrate de manejar la fecha de vencimiento si puede ser nula
+            editFechaVencimiento.value = glosa.fecha_vencimiento_respuesta || ''; 
+            
+            editGlosaOutput.textContent = ''; // Limpiar mensajes previos
+            // Ocultar la sección de glosas para enfocarse en la edición
+            document.querySelector('section:nth-of-type(2)').style.display = 'none'; 
+        }
+
+        // --- Eventos de Botones de Glosas ---
+        refreshGlosasBtn.addEventListener('click', fetchGlosas);
+        applyFiltersBtn.addEventListener('click', fetchGlosas);
+
+        clearFiltersBtn.addEventListener('click', () => {
+            filterFacturaNum.value = '';
+            filterEstado.value = '';
+            filterFechaGlosaDesde.value = '';
+            filterFechaGlosaHasta.value = '';
+            fetchGlosas(); // Recargar con filtros limpios
+        });
+
+        newGlosaBtn.addEventListener('click', () => {
+            createGlosaSection.style.display = 'block'; // Muestra la sección del formulario de creación
+            editGlosaSection.style.display = 'none'; // Asegúrate de ocultar el de edición
+            createGlosaForm.reset(); // Limpiar el formulario
+            createGlosaOutput.textContent = '';
+            // Ocultar la sección de glosas para enfocarse en la creación
+            document.querySelector('section:nth-of-type(2)').style.display = 'none'; 
+        });
+
+        cancelCreateGlosaBtn.addEventListener('click', () => {
+            createGlosaSection.style.display = 'none'; // Oculta la sección del formulario de creación
+            // Mostrar de nuevo la sección de glosas
+            document.querySelector('section:nth-of-type(2)').style.display = 'block'; 
+        });
+
+        cancelEditGlosaBtn.addEventListener('click', () => {
+            editGlosaSection.style.display = 'none'; // Oculta la sección del formulario de edición
+            // Mostrar de nuevo la sección de glosas
+            document.querySelector('section:nth-of-type(2)').style.display = 'block'; 
+        });
+
+        createGlosaForm.addEventListener('submit', async (event) => {
+            event.preventDefault(); // Evita que el formulario se envíe de la forma tradicional
+            createGlosaOutput.textContent = 'Creando glosa...';
+
+            if (!accessToken) {
+                showAlert('Debes iniciar sesión para crear glosas.', 'error');
+                createGlosaOutput.textContent = 'Error: Debes iniciar sesión.';
+                return;
+            }
+
+            const glosaData = {
+                id_factura: parseInt(document.getElementById('inputFacturaId').value),
+                id_motivo_glosa: parseInt(document.getElementById('inputMotivoGlosaId').value),
+                fecha_glosa: document.getElementById('inputFechaGlosa').value, // Formato YYYY-MM-DD
+                valor_glosado: parseFloat(document.getElementById('inputValorGlosado').value),
+                observaciones_glosa: document.getElementById('inputObservaciones').value,
+                estado_glosa: "Pendiente", // Puedes hacerlo configurable, o dejar que la API lo defina
+                usuario_responsable: parseInt(document.getElementById('inputUsuarioResponsable').value),
+                fecha_vencimiento_respuesta: document.getElementById('inputFechaVencimiento').value || null
+            };
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/glosas/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}` // La creación requiere autenticación
+                    },
+                    body: JSON.stringify(glosaData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`HTTP error! status: ${response.status} - ${JSON.stringify(errorData)}`);
+                }
+                const data = await response.json();
+                createGlosaOutput.textContent = JSON.stringify(data, null, 2);
+                showAlert('Glosa creada con éxito!', 'success');
+                createGlosaSection.style.display = 'none'; // Oculta el formulario
+                document.querySelector('section:nth-of-type(2)').style.display = 'block'; // Mostrar sección de glosas
+                fetchGlosas(); // Recarga la lista de glosas
+            } catch (error) {
+                createGlosaOutput.textContent = `Error al crear glosa: ${error.message}`;
+                console.error('Error al crear glosa:', error);
+                showAlert(`Error al crear glosa: ${error.message}`, 'error');
+            }
+        });
+
+        // Event Listener para el envío del formulario de edición
+        editGlosaForm.addEventListener('submit', async (event) => {
+            event.preventDefault(); // Evita que el formulario se envíe de la forma tradicional
+            editGlosaOutput.textContent = 'Actualizando glosa...';
+
+            if (!accessToken) {
+                showAlert('Debes iniciar sesión para actualizar glosas.', 'error');
+                editGlosaOutput.textContent = 'Error: Debes iniciar sesión.';
+                return;
+            }
+
+            const glosaId = editGlosaIdInput.value;
+            const glosaData = {
+                id_factura: parseInt(editFacturaId.value),
+                id_motivo_glosa: parseInt(editMotivoGlosaId.value),
+                fecha_glosa: editFechaGlosa.value,
+                valor_glosado: parseFloat(editValorGlosado.value),
+                observaciones_glosa: editObservaciones.value,
+                estado_glosa: editEstadoGlosa.value,
+                usuario_responsable: parseInt(editUsuarioResponsable.value),
+                fecha_vencimiento_respuesta: editFechaVencimiento.value || null
+            };
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/glosas/${glosaId}`, {
+                    method: 'PUT', // Método PUT para actualizar
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify(glosaData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`HTTP error! status: ${response.status} - ${JSON.stringify(errorData)}`);
+                }
+                const data = await response.json();
+                editGlosaOutput.textContent = JSON.stringify(data, null, 2);
+                showAlert(`Glosa ID ${glosaId} actualizada con éxito!`, 'success');
+                editGlosaSection.style.display = 'none'; // Oculta el formulario de edición
+                document.querySelector('section:nth-of-type(2)').style.display = 'block'; // Mostrar sección de glosas
+                fetchGlosas(); // Recarga la lista de glosas
+            } catch (error) {
+                editGlosaOutput.textContent = `Error al actualizar glosa: ${error.message}`;
+                console.error('Error al actualizar glosa:', error);
+                showAlert(`Error al actualizar glosa ID ${glosaId}: ${error.message}`, 'error');
+            }
+        });
+
+
+        // --- Inicialización ---
+        document.addEventListener('DOMContentLoaded', () => {
+            updateUIOnLogin(); // Chequea si ya hay un token (ej. si se refrescó la página)
+            // Si quieres que las glosas se carguen automáticamente al iniciar la página, incluso sin login
+            // puedes llamar a fetchGlosas() aquí sin la condición de accessToken.
+            // Para fines de este ejercicio, las cargaré solo después de un login exitoso.
+            glosasTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Inicia sesión para ver las glosas.</td></tr>';
+        });
+
+    </script>
+</body>
+</html>
